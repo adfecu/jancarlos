@@ -1,4 +1,5 @@
 import streamlit as st
+import sqlite3
 
 hide_streamlit_style = """
                 <style>
@@ -38,40 +39,47 @@ st.write(
     "Bienvenidos a mi página web"
 )
 
-# --- Simple CRUD App Demo ---
-st.header('Simple CRUD App Demo')
 
-# Simple in-memory data store
-if 'items' not in st.session_state:
-    st.session_state['items'] = []
+# --- Simple CRUD App Demo with SQLite ---
+st.header('Simple CRUD App Demo (SQLite)')
+
+# Database setup
+conn = sqlite3.connect('items.db')
+c = conn.cursor()
+c.execute('''CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)''')
+conn.commit()
 
 # Create
 st.subheader('Create Item')
 new_item = st.text_input('Enter new item')
 if st.button('Add Item'):
     if new_item:
-        st.session_state['items'].append(new_item)
+        c.execute('INSERT INTO items (name) VALUES (?)', (new_item,))
+        conn.commit()
         st.success(f'Added: {new_item}')
     else:
         st.warning('Please enter an item.')
 
 # Read
 st.subheader('Items List')
-if st.session_state['items']:
-    for idx, item in enumerate(st.session_state['items']):
-        st.write(f"{idx+1}. {item}")
+c.execute('SELECT id, name FROM items')
+rows = c.fetchall()
+if rows:
+    for idx, (item_id, item_name) in enumerate(rows):
+        st.write(f"{item_id}. {item_name}")
 else:
     st.info('No items yet.')
 
 # Update
 st.subheader('Update Item')
-if st.session_state['items']:
-    update_idx = st.number_input('Select item number to update', min_value=1, max_value=len(st.session_state['items']), step=1)
+if rows:
+    update_id = st.number_input('Select item ID to update', min_value=1, max_value=max([r[0] for r in rows]), step=1)
     updated_text = st.text_input('New value for item')
     if st.button('Update Item'):
         if updated_text:
-            st.session_state['items'][update_idx-1] = updated_text
-            st.success(f'Item {update_idx} updated.')
+            c.execute('UPDATE items SET name = ? WHERE id = ?', (updated_text, update_id))
+            conn.commit()
+            st.success(f'Item {update_id} updated.')
         else:
             st.warning('Please enter a new value.')
 else:
@@ -79,10 +87,11 @@ else:
 
 # Delete
 st.subheader('Delete Item')
-if st.session_state['items']:
-    delete_idx = st.number_input('Select item number to delete', min_value=1, max_value=len(st.session_state['items']), step=1)
+if rows:
+    delete_id = st.number_input('Select item ID to delete', min_value=1, max_value=max([r[0] for r in rows]), step=1)
     if st.button('Delete Item'):
-        removed = st.session_state['items'].pop(delete_idx-1)
-        st.success(f'Deleted: {removed}')
+        c.execute('DELETE FROM items WHERE id = ?', (delete_id,))
+        conn.commit()
+        st.success(f'Deleted item {delete_id}')
 else:
     st.info('No items to delete.')
