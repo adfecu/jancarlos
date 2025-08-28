@@ -82,7 +82,7 @@ if add_btn:
         c.execute('INSERT INTO items (name, "order") VALUES (?, ?)', (text_bar.strip(), max_order + 1))
         conn.commit()
         st.success(f'Añadido: {text_bar.strip()}')
-        st.experimental_rerun()
+        st.rerun()
     else:
         st.warning('No se permiten entradas vacías.')
 elif search_btn:
@@ -112,12 +112,12 @@ if rows:
             if st.button('Eliminar', key=f'del_{item_id}'):
                 c.execute('DELETE FROM items WHERE id = ?', (item_id,))
                 conn.commit()
-                st.experimental_rerun()
+                st.rerun()
         with row3:
             edit_mode = st.session_state.get(f'edit_mode_{item_id}', False)
             if st.button('Editar', key=f'edit_btn_{item_id}'):
                 st.session_state[f'edit_mode_{item_id}'] = True
-                st.experimental_rerun()
+                st.rerun()
             if edit_mode:
                 edit_val = st.text_input('Nuevo valor', value=item_name, key=f'edit_val_{item_id}')
                 if st.button('Guardar', key=f'save_{item_id}'):
@@ -126,7 +126,7 @@ if rows:
                         conn.commit()
                         st.session_state[f'edit_mode_{item_id}'] = False
                         st.success(f'Item {item_id} actualizado.')
-                        st.experimental_rerun()
+                        st.rerun()
                     else:
                         st.warning('No se permiten entradas vacías.')
         with row4:
@@ -149,7 +149,7 @@ if rows:
                     c.execute('UPDATE items SET "order" = ? WHERE id = ?', (target_order + 1, item_id))
                     conn.commit()
                     st.success(f'Item {item_id} movido después de {target_id}.')
-                    st.experimental_rerun()
+                    st.rerun()
             else:
                 st.write('No hay otros items')
         with row5:
